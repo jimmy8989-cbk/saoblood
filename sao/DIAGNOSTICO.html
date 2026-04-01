@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔍 Diagnóstico SAO OS</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 2px solid #00ff00;
+            border-radius: 5px;
+        }
+        .error { color: #ff0000; }
+        .success { color: #00ff00; }
+        .warning { color: #ffaa00; }
+        h2 { border-bottom: 2px solid #00ff00; padding-bottom: 10px; }
+        pre { background: #0a0a0a; padding: 10px; overflow-x: auto; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover { background: #00aa00; }
+    </style>
+</head>
+<body>
+    <h1>🔍 DIAGNÓSTICO DE SAO OS</h1>
+    
+    <div class="section">
+        <h2>1️⃣ Verificación de Scripts Cargados</h2>
+        <pre id="script-check"></pre>
+    </div>
+
+    <div class="section">
+        <h2>2️⃣ Verificación de Funciones Globales</h2>
+        <pre id="functions-check"></pre>
+    </div>
+
+    <div class="section">
+        <h2>3️⃣ Verificación del DOM</h2>
+        <pre id="dom-check"></pre>
+    </div>
+
+    <div class="section">
+        <h2>4️⃣ Prueba de Funciones</h2>
+        <button onclick="testFunction('switchAuthTab', ['signin'])">Test: switchAuthTab('signin')</button>
+        <button onclick="testFunction('showToast', ['¡Hola!', 'success'])">Test: showToast('¡Hola!', 'success')</button>
+        <button onclick="testFunction('toggleZenMode', [])">Test: toggleZenMode()</button>
+        <button onclick="testFunction('startNewChat', [])">Test: startNewChat()</button>
+        <pre id="test-results"></pre>
+    </div>
+
+    <div class="section">
+        <h2>5️⃣ Estado de Elementos HTML</h2>
+        <pre id="elements-check"></pre>
+    </div>
+
+    <script>
+        // Función para agregar a resultados
+        function addResult(sectionId, text, isError = false) {
+            const section = document.getElementById(sectionId);
+            const className = isError ? 'error' : 'success';
+            section.innerHTML += `<span class="${className}">${text}</span>\n`;
+        }
+
+        // 1. Verificar scripts
+        console.log('📋 Iniciando diagnóstico...');
+        
+        const scripts = document.querySelectorAll('script');
+        const scriptCheck = document.getElementById('script-check');
+        scriptCheck.innerHTML = `Total de scripts: ${scripts.length}\n\n`;
+        scripts.forEach((script, i) => {
+            const src = script.src || '(inline)';
+            scriptCheck.innerHTML += `${i+1}. ${src}\n`;
+        });
+
+        // 2. Verificar funciones
+        setTimeout(() => {
+            const functionsCheck = document.getElementById('functions-check');
+            const functions = [
+                'handleAuthSubmit', 'switchAuthTab', 'switchToSignin', 'switchToSignup',
+                'toggleProfilePanel', 'openSettings', 'closeSettings', 'toggleZenMode',
+                'startNewChat', 'handleSend', 'showToast', 'toggleSidebarQuickPanel',
+                'toggleMobileSidebar', 'toggleCompactMode', 'toggleBattleMode'
+            ];
+
+            functionsCheck.innerHTML = `Funciones a verificar: ${functions.length}\n\n`;
+            
+            functions.forEach(fnName => {
+                const exists = typeof window[fnName] === 'function';
+                const status = exists ? '✓' : '✗';
+                const color = exists ? 'success' : 'error';
+                functionsCheck.innerHTML += `<span class="${color}">${status} ${fnName}</span>\n`;
+            });
+
+            // 3. Verificar elementos del DOM
+            const domCheck = document.getElementById('dom-check');
+            const elements = {
+                'auth-screen': '#auth-screen',
+                'app-container': '#app-container',
+                'chat-input': '#chat-input',
+                'auth-signin-email': '#auth-signin-email',
+                'auth-tab-signin': '#auth-tab-signin',
+                'btn-profile-menu': '#btn-profile-menu',
+                'chat-form': '#chat-form',
+                'btn-send': '#btn-send'
+            };
+
+            domCheck.innerHTML = 'Elementos del DOM:\n\n';
+            Object.entries(elements).forEach(([name, selector]) => {
+                const el = document.querySelector(selector);
+                const exists = el ? '✓' : '✗';
+                const color = el ? 'success' : 'error';
+                domCheck.innerHTML += `<span class="${color}">${exists} ${name} (${selector})</span>\n`;
+            });
+
+            // 4. Función para testear
+            window.testFunction = function(fnName, args) {
+                const testResults = document.getElementById('test-results');
+                try {
+                    const fn = window[fnName];
+                    if (typeof fn !== 'function') {
+                        testResults.innerHTML += `<span class="error">✗ ${fnName} no es una función</span>\n`;
+                        return;
+                    }
+                    fn(...args);
+                    testResults.innerHTML += `<span class="success">✓ ${fnName}(${args.map(a => JSON.stringify(a)).join(',')}) - OK</span>\n`;
+                } catch (e) {
+                    testResults.innerHTML += `<span class="error">✗ ${fnName}() ERROR: ${e.message}</span>\n`;
+                }
+            };
+
+            // 5. Verificar elementos específicos
+            const elementsCheck = document.getElementById('elements-check');
+            elementsCheck.innerHTML = 'Estado de elementos importantes:\n\n';
+
+            const authScreen = document.querySelector('#auth-screen');
+            if (authScreen) {
+                elementsCheck.innerHTML += `<span class="success">✓ Auth screen existe</span>\n`;
+                elementsCheck.innerHTML += `  - display: ${getComputedStyle(authScreen).display}\n`;
+                elementsCheck.innerHTML += `  - hidden class: ${authScreen.classList.contains('hidden')}\n`;
+            }
+
+            const appContainer = document.querySelector('#app-container');
+            if (appContainer) {
+                elementsCheck.innerHTML += `<span class="success">✓ App container existe</span>\n`;
+                elementsCheck.innerHTML += `  - display: ${getComputedStyle(appContainer).display}\n`;
+                elementsCheck.innerHTML += `  - hidden class: ${appContainer.classList.contains('hidden')}\n`;
+            }
+
+            elementsCheck.innerHTML += '\nClicabilidad de botones:\n';
+            const buttons = document.querySelectorAll('button[onclick]');
+            elementsCheck.innerHTML += `Total botones con onclick: ${buttons.length}\n`;
+            Array.from(buttons).slice(0, 5).forEach(btn => {
+                elementsCheck.innerHTML += `  - ${btn.id || btn.textContent.substring(0, 20)} | onclick: ${btn.onclick != null ? '✓' : '✗'}\n`;
+            });
+
+        }, 1000);
+    </script>
+</body>
+</html>
